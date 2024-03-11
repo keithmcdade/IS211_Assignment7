@@ -73,19 +73,27 @@ def check_input(choice):
         return True
 
 
-def scoring(player):
+def scoring(player, *args):
     roll = Die.roll()
-    print(f"{player.name} rolled a {roll}.")
     if roll == 1:
         print(f"{player.name} rolled a {roll}, too bad.")
         return False
-    player.add_score(roll)
-    print(f"{player.name}'s score is {player.score}.")
-    score = player.score
-    return True
+    else:
+        player.add_score(roll)
+        print(f"{player.name} rolled a {roll}.")
+        print(f"{player.name}'s score is {player.score}.")
+        return True
+
+
+def check_score(score):
+    if score >= 100:
+        return False
+    else:
+        return True
 
 
 def turn(player):
+
     cond = True
     while cond:
         choice = input(f"{player.name}'s turn. Type 'R' to roll.\n")
@@ -97,29 +105,38 @@ def turn(player):
         else:
             if phase_1(choice):
                 outcome = scoring(player)
-                # score = player.score
                 if not outcome:
-                    cond = False
-                    # return False
                     break
+                # begin phase 2, it is important that the player loop through
+                # this section until they either roll a one or choose to hold
                 elif outcome:
-                    # begin phase 2
+                    score = player.score
+                    if score >= 20:
+                        break
                     choice = input(f"{player.name}'s turn. Type 'R' to roll or 'H' to hold.\n")
                     player_continue = phase_2(player, choice)
                     if not player_continue:
-                        cond = False
-                        # return False
+                        break
                     else:
                         while player_continue:
                             outcome = scoring(player)
                             score = player.score
-                            choice = input(f"{player.name}'s turn. Type 'R' to roll or 'H' to hold.\n")
-                            player_continue = phase_2(player, choice)
-                            if outcome and choice:
-                                continue
-                            elif not choice:
+                            if score >= 20:
                                 cond = False
-                                return False
+                                break
+                            if not outcome:
+                                cond = False
+                                break
+                            else:
+                                choice = input(f"{player.name}'s turn. Type 'R' to roll or 'H' to hold.\n")
+                                player_continue = phase_2(player, choice)
+                                if player_continue:
+                                    continue
+                                else:
+                                    cond = False
+                                    break
+                    if not cond:
+                        break
 
 
 def main():
@@ -134,13 +151,15 @@ def main():
 
     no_winner = True
     while no_winner:
-        player_1_end = turn(player_1)
-        if player_1_end:
-            continue
-        else:
-            player_2_turn = turn(player_2)
-            if not player_2_turn:
-                continue
+        turn(player_1)
+        if player_1.score >= 20:
+            print(f"{player_1.name} has scored {player_1.score}. {player_1.name} won!")
+            break
+
+        turn(player_2)
+        if player_2.score >= 20:
+            print(f"{player_2.name} has scored {player_2.score}. {player_2.name} won!")
+            break
 
 
 if __name__ == '__main__':
