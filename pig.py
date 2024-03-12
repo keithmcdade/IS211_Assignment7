@@ -7,7 +7,6 @@ random.seed(0)
 
 class Player:
     score = 0
-    this_turn_total = 0
 
     def __init__(self, name):
         self.name = f"Player {name}"
@@ -17,7 +16,6 @@ class Die:
     def __init__(self, name):
         self.name = name
 
-    # class function for rolling die objects
     @staticmethod
     def roll():
         roll = random.randint(1, 6)
@@ -25,9 +23,11 @@ class Die:
 
 
 class Game:
+    # b/c the player can't hold at the start of their turn, each turn is split into 2 "phases"
+    # the is_initial_phase variable is a flag to determine which phase of the player turn it is
     is_initial_phase = False
     current_turn_total = 0
-    winning_score = 20
+    winning_score = 100
 
     def __init__(self, name):
         self.name = name
