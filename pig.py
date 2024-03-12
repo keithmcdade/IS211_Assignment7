@@ -97,8 +97,8 @@ class Game:
 def main():
     parser = argparse.ArgumentParser(description="Program to play the game of Pig.")
     parser.add_argument("-p", "--numPlayers",
-                        help="How many players you would like to play with, in integer format. The default and minimum "
-                             "number of players is 2, and the maximum is 10. You must enter a value within that range.",
+                        help="How many players you would like to play with, in integer format. The default is 2, the "
+                             "minimum is 1, and the maximum is 10. You must enter a value within that range.",
                         type=int, choices=range(1, 11), default=2)
     args = parser.parse_args()
 
