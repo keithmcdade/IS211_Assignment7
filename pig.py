@@ -8,11 +8,18 @@ random.seed(0)
 
 class Player:
     score = 0
+    wins = 0
     players = []
 
     def __init__(self, name):
         self.name = f"Player {name}"
-        Player.players.append(self)
+
+    @classmethod
+    def create_players(cls, num_players):
+        for num in range(1, (num_players + 1)):
+            player = Player(num)
+            cls.players.append(player)
+        return cls.players
 
 
 class Die:
@@ -33,21 +40,12 @@ class Game:
     # the is_initial_phase variable is a flag to determine which phase of the player turn it is
     is_initial_phase = False
     current_turn_total = 0
-    winning_score = 100
-    games = []
-    players = []
 
-    def __init__(self, name="Pig", num_players=2, sides=6):
+    def __init__(self, players, name="Game", sides=6, winning_score=100):
         self.name = name
-        self.players = self.create_players(num_players)
         self.die = Die(f"{self.name} die", sides)
-        Game.games.append(self)
-
-    def create_players(self, num_players):
-        for num in range(1, (num_players + 1)):
-            player = Player(num)
-            self.players.append(player)
-        return self.players
+        self.players = players
+        self.winning_score = winning_score
 
     def parse_input(self, player):
         while True:
@@ -111,12 +109,15 @@ class Game:
         self.current_turn_total = 0
 
     def play_game(self):
+        for player in self.players:
+            player.score = 0
         no_winner = True
         while no_winner:
             for player in self.players:
                 self.turn(player)
                 if player.score >= self.winning_score:
                     print(f"{player.name} has scored {player.score}. {player.name} won!")
+                    player.wins += 1
                     no_winner = False
                     break
                 if not no_winner:
@@ -133,7 +134,7 @@ def main():
                         help="How many players you would like to play with, in integer format. The default is 2, the "
                              "minimum is 1, and the maximum is 10. You must enter a value within that range.",
                         type=int, choices=range(1, 11),
-                        default=inspect.signature(Game.__init__).parameters['num_players'].default)
+                        default=2)
     parser.add_argument("-d", "--numSides",
                         help="Amount of sides each game die has, in integer format. The default is 6, the "
                              "minimum is 4, and the maximum is 20. You must enter a value within that range.",
@@ -146,6 +147,11 @@ def main():
                              "all games have been completed.",
                         type=int, choices=range(1, 5),
                         default=1)
+    parser.add_argument("-s", "--score",
+                        help="Amount of points needed to win the game. Default is 100, minimum is 20 and maximum is "
+                             "1000.",
+                        type=int, choices=range(20, 1001),
+                        default=inspect.signature(Game.__init__).parameters['winning_score'].default)
     args = parser.parse_args()
 
     if args.numGames == 1:
@@ -158,13 +164,11 @@ def main():
           f"roll any other number they add it to their score and can decide to roll again or hold and pass the die to "
           f"the next player. Remember, if you roll a one at any point, your score reverts to what it was when the turn "
           f"started. There are currently {args.numPlayers} players, playing with a {args.numSides}-sided die, and "
-          f"there {text}. Player 1 rolls first.\nGood luck!\n")
+          f"there {text}. The points needed to win is {args.score}. Player 1 rolls first.\nGood luck!\n")
 
-    games = []
+    players = Player.create_players(args.numPlayers)
     for num in range(1, args.numGames + 1):
-        game = Game(f"{args.name} {num}", args.numPlayers, args.numSides)
-        games.append(game)
-    for game in games:
+        game = Game(players, f"{args.name} {num}", args.numSides, args.score)
         game.play_game()
 
 
