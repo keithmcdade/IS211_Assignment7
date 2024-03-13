@@ -7,18 +7,23 @@ random.seed(0)
 
 class Player:
     score = 0
+    players = []
 
     def __init__(self, name):
         self.name = f"Player {name}"
+        Player.players.append(self)
 
 
 class Die:
-    def __init__(self, name):
-        self.name = name
+    dice = []
 
-    @staticmethod
-    def roll():
-        roll = random.randint(1, 6)
+    def __init__(self, name, sides):
+        self.name = name
+        self.sides = int(sides)
+        Die.dice.append(self)
+
+    def roll(self):
+        roll = random.randint(1, self.sides)
         return roll
 
 
@@ -28,9 +33,20 @@ class Game:
     is_initial_phase = False
     current_turn_total = 0
     winning_score = 100
+    players = []
+    games = []
 
-    def __init__(self, name):
+    def __init__(self, name, num_players, sides):
         self.name = name
+        self.players = self.create_players(num_players)
+        self.die = Die(f"{self.name} die", sides)
+        Game.games.append(self)
+
+    def create_players(self, num_players):
+        for num in range(1, (num_players + 1)):
+            player = Player(num)
+            self.players.append(player)
+        return self.players
 
     def parse_input(self, player):
         while True:
@@ -54,8 +70,8 @@ class Game:
                     print(f"Invalid input.")
                     continue
 
-    def scoring(self, player, die):
-        roll = die.roll()
+    def scoring(self, player):
+        roll = self.die.roll()
         if roll == 1:
             self.rolled_one(player)
             print(f"{player.name} rolled a {roll}, too bad. {player.name}'s score is {player.score}")
@@ -79,7 +95,7 @@ class Game:
         player.score -= self.current_turn_total
         self.current_turn_total = 0
 
-    def turn(self, player, die):
+    def turn(self, player):
         self.current_turn_total = 0
         self.is_initial_phase = True
         is_valid = self.parse_input(player)
@@ -87,11 +103,23 @@ class Game:
         while is_continue:
             if is_valid:
                 self.is_initial_phase = False
-                is_good_roll = self.scoring(player, die)
+                is_good_roll = self.scoring(player)
                 if is_good_roll:
                     is_continue = self.parse_input(player)
                 else:
                     is_continue = False
+
+    def play_game(self):
+        no_winner = True
+        while no_winner:
+            for player in self.players:
+                self.turn(player)
+                if player.score >= self.winning_score:
+                    print(f"{player.name} has scored {player.score}. {player.name} won!")
+                    no_winner = False
+                    break
+                if not no_winner:
+                    break
 
 
 def main():
@@ -108,24 +136,8 @@ def main():
           f"the next player. Remember, if you roll a one at any point, your score reverts to what it was when the turn "
           f"started. There are currently {args.numPlayers} players. Player 1 rolls first.\nGood luck!\n")
 
-    pig = Game("pig")
-    die = Die("The Die")
-    players = []
-
-    for num in range(1, (args.numPlayers + 1)):
-        player = Player(num)
-        players.append(player)
-
-    no_winner = True
-    while no_winner:
-        for player in players:
-            pig.turn(player, die)
-            if player.score >= pig.winning_score:
-                print(f"{player.name} has scored {player.score}. {player.name} won!")
-                no_winner = False
-                break
-            if not no_winner:
-                break
+    pig = Game("pig", args.numPlayers, 6)
+    pig.play_game()
 
 
 if __name__ == '__main__':
