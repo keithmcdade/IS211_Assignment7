@@ -1,5 +1,6 @@
 import random
 import argparse
+import inspect
 
 
 random.seed(0)
@@ -33,10 +34,10 @@ class Game:
     is_initial_phase = False
     current_turn_total = 0
     winning_score = 100
-    players = []
     games = []
+    players = []
 
-    def __init__(self, name, num_players, sides):
+    def __init__(self, name="Pig", num_players=2, sides=6):
         self.name = name
         self.players = self.create_players(num_players)
         self.die = Die(f"{self.name} die", sides)
@@ -70,6 +71,20 @@ class Game:
                     print(f"Invalid input.")
                     continue
 
+    def turn(self, player):
+        self.current_turn_total = 0
+        self.is_initial_phase = True
+        is_continue = True
+        is_valid = self.parse_input(player)
+        while is_continue:
+            if is_valid:
+                self.is_initial_phase = False
+                is_good_roll = self.scoring(player)
+                if is_good_roll:
+                    is_continue = self.parse_input(player)
+                else:
+                    is_continue = False
+
     def scoring(self, player):
         roll = self.die.roll()
         if roll == 1:
@@ -95,20 +110,6 @@ class Game:
         player.score -= self.current_turn_total
         self.current_turn_total = 0
 
-    def turn(self, player):
-        self.current_turn_total = 0
-        self.is_initial_phase = True
-        is_valid = self.parse_input(player)
-        is_continue = True
-        while is_continue:
-            if is_valid:
-                self.is_initial_phase = False
-                is_good_roll = self.scoring(player)
-                if is_good_roll:
-                    is_continue = self.parse_input(player)
-                else:
-                    is_continue = False
-
     def play_game(self):
         no_winner = True
         while no_winner:
@@ -124,20 +125,47 @@ class Game:
 
 def main():
     parser = argparse.ArgumentParser(description="Program to play the game of Pig.")
+    parser.add_argument("-n", "--name",
+                        help="This is the name of an individual game.",
+                        type=str,
+                        default=inspect.signature(Game.__init__).parameters['name'].default)
     parser.add_argument("-p", "--numPlayers",
                         help="How many players you would like to play with, in integer format. The default is 2, the "
                              "minimum is 1, and the maximum is 10. You must enter a value within that range.",
-                        type=int, choices=range(1, 11), default=2)
+                        type=int, choices=range(1, 11),
+                        default=inspect.signature(Game.__init__).parameters['num_players'].default)
+    parser.add_argument("-d", "--numSides",
+                        help="Amount of sides each game die has, in integer format. The default is 6, the "
+                             "minimum is 4, and the maximum is 20. You must enter a value within that range.",
+                        type=int, choices=range(4, 21),
+                        default=inspect.signature(Game.__init__).parameters['sides'].default)
+    parser.add_argument("-g", "--numGames",
+                        help="Amount of games being created, in integer format. The default is 1, the "
+                             "minimum is 1, and the maximum is 4. You must enter a value within that range."
+                             "Each game will be played sequentially, when one game ends the next game begins until "
+                             "all games have been completed.",
+                        type=int, choices=range(1, 5),
+                        default=1)
     args = parser.parse_args()
+
+    if args.numGames == 1:
+        text = f"is {args.numGames} game"
+    else:
+        text = f"are {args.numGames} games"
 
     print(f"Welcome to Pig! The rules are simple: each player repeatedly rolls a die until they roll a one or they "
           f"decide to hold. If they roll a one they score nothing and must pass the die to the next player.\nIf they "
           f"roll any other number they add it to their score and can decide to roll again or hold and pass the die to "
           f"the next player. Remember, if you roll a one at any point, your score reverts to what it was when the turn "
-          f"started. There are currently {args.numPlayers} players. Player 1 rolls first.\nGood luck!\n")
+          f"started. There are currently {args.numPlayers} players, playing with a {args.numSides}-sided die, and "
+          f"there {text}. Player 1 rolls first.\nGood luck!\n")
 
-    pig = Game("pig", args.numPlayers, 6)
-    pig.play_game()
+    games = []
+    for num in range(1, args.numGames + 1):
+        game = Game(f"{args.name} {num}", args.numPlayers, args.numSides)
+        games.append(game)
+    for game in games:
+        game.play_game()
 
 
 if __name__ == '__main__':
